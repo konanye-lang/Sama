@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' https: data:; style-src 'self' https: 'unsafe-inline'; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; font-src 'self' https: data:; upgrade-insecure-requests">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="مكتبة نغمات سماء العاصمة — استمع لمعاينة 15 ثانية واطلب الاشتراك بسهولة." />
+  <meta property="og:title" content="مكتبة نغمات سماء العاصمة" />
+  <meta property="og:description" content="استمع لمعاينة 15 ثانية واطلب الاشتراك بسهولة." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="logo.png" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>مكتبة نغمات سماء العاصمة</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css" />
+<link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="apple-touch-icon" href="logo.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    /* Icon font fallback (final fix): avoid external SVG/PNG issues */
+    .social a { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; }
+    .social a i { font-size:22px; line-height:1; }
+    .contact-chip .contact-ico.fa { display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center; border-radius:12px; }
+    .contact-chip .contact-ico.fa i { font-size:22px; line-height:1; }
+  </style>
+
+
+<style>
+html, body {
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+.toast:empty { display:none !important; }
+</style>
+
+<style id="layoutTweaks">
+  /* ✅ بطاقتان في الصف الواحد (الأقسام + القائمة + الاشتراكات) */
+  .grid.categories-grid,
+  .grid.list-grid,
+  .subs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  /* تحسين مظهر البطاقة عند تصغيرها */
+  .grid.categories-grid > *,
+  .grid.list-grid > *,
+  .subs-grid > * {
+    min-width: 0;
+  }
+
+  /* على الشاشات الصغيرة جدًا نرجع لعمود واحد */
+  @media (max-width: 360px) {
+  /* الأقسام والاشتراكات: عمود واحد على الشاشات الصغيرة جدًا */
+  .grid.categories-grid,
+  .subs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* ✅ القائمة (النغمات) تبقى عمودين */
+  .grid.list-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+  }
+
+  /* ✅ صورة داخل صندوق الاشتراك */
+  .subs-banner {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 10px 0 12px;
+    border: 1px solid rgba(203,169,79,.35);
+    background: rgba(255,255,255,.6);
+  }
+  .subs-banner img{
+    width: 100%;
+    height: 140px;
+    object-fit: contain;
+    display: block;
+    padding: 10px;
+  }
+</style>
+
+
+  <script>
+    // Capture beforeinstallprompt early to prevent the default mini-infobar (Chrome/Edge)
+    window.__pwaDeferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault();
+      window.__pwaDeferredPrompt = e;
+      window.dispatchEvent(new Event('pwa:ready'));
+    });
+  </script>
+
+</head>
+<body>
+  <div class="app">
+
+    <!-- يظهر فقط في الصفحة الرئيسية -->
+    <header class="header" id="homeHeader">
+      <div class="brand">
+        <div class="brand-logo" aria-label="Logo">
+          <img src="logo.png" alt="Samaa Logo" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='grid';" decoding="async">
+          <div id="logoFallback" class="logo-fallback" style="display:none">🎵</div>
+        </div>
+
+        <h1 class="title">مكتبة نغمات سماء العاصمة </h1>
+        <p class="subtitle"> استمع فورًا، ثم فعّل النغمة التي أعجبتك بخطوة واحدة.</p>
+
+      <div id="installBar" class="install-bar" style="display:none" aria-label="Install App Bar">
+        <button id="installYes" class="install-btn" type="button">تثبيت</button>
+        <button id="installLater" class="install-later" type="button">لاحقًا</button>
+      </div>
+
+</div>
+
+      <div class="royal-divider"></div>
+    </header>
+
+    <main class="main">
+      <div class="container">
+
+        <!-- الصفحة الرئيسية: الأقسام -->
+        <section id="viewCategories" class="view">
+          <div id="categoriesGrid" class="grid categories-grid"></div>
+        </section>
+
+        <!-- صفحة القائمة: نغمات القسم -->
+        <section id="viewList" class="view hidden">
+          <div class="topbar">
+<div class="topbar-text"><h2 id="listTitle" class="section-badge section-title" style="margin:0;"></h2></div>
+            
+          </div>
+
+          <!-- يظهر فقط في (أدعية بالاسم) و (ردود آلية بالاسم) -->
+          <div id="listSearchWrap" class="search-wrap hidden" aria-label="بحث بالاسم">
+            <input id="listSearchInput" class="search-input" type="search" placeholder="ابحث بالاسم..." autocomplete="off" />
+          </div>
+
+          <div id="listGrid" class="grid list-grid"></div>
+        </section>
+
+        <!-- صفحة التفاصيل -->
+        <section id="viewDetails" class="view hidden">
+          <div class="topbar">
+<div class="topbar-text"><h2  class="section-title" style="margin:0;">تفاصيل النغمة</h2></div>
+            
+          </div>
+
+          <div class="card details-card">
+            <div id="detailsName" class="details-name"></div>
+
+            <!-- الضغط على الصورة = تشغيل/إيقاف -->
+            <div class="media" id="mediaToggle" tabindex="0" aria-label="تشغيل أو إيقاف">
+              <img id="detailsImage" class="media-img" src="" alt="" decoding="async">
+            </div>
+
+            <audio id="detailsAudio"></audio>
+
+            <div class="card-soft">
+<div id="subsGrid" class="subs-grid"></div>
+              <div id="toast" class="toast"></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="card footer-card">
+
+      <h3 class="footer-title">للتواصل</h3>
+
+<div>
+
+      </div>
+
+      <!-- Social Icons -->
+      <div class="social" aria-label="Social Links">
+        <a href="https://www.instagram.com/samaalasmah" aria-label="Instagram" target="_blank" rel="noopener noreferrer" referrerpolicy="strict-origin-when-cross-origin">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+        <a href="https://t.me/Samaalasmah" aria-label="Telegram" target="_blank" rel="noopener noreferrer" referrerpolicy="strict-origin-when-cross-origin">
+          <i class="fa-brands fa-telegram"></i>
+        </a>
+        <a href="https://x.com/Samaalasmah" aria-label="X" target="_blank" rel="noopener noreferrer" referrerpolicy="strict-origin-when-cross-origin">
+          <i class="fa-brands fa-x-twitter"></i>
+        </a>
+        <a href="https://www.youtube.com/@Samaalasmah" aria-label="YouTube" target="_blank" rel="noopener noreferrer" referrerpolicy="strict-origin-when-cross-origin">
+          <i class="fa-brands fa-youtube"></i>
+        </a>
+        <a href="https://www.facebook.com/share/1H9gS97wFh/" aria-label="Facebook" target="_blank" rel="noopener noreferrer" referrerpolicy="strict-origin-when-cross-origin">
+          <i class="fa-brands fa-facebook-f"></i>
+        </a>
+      </div>
+
+      <p class="footer-note">
+        © <span id="year"></span> سماء العاصمة 
+      </p>
+
+    </div>
+  </div>
+</footer>
+<script src="data.js" defer></script>
+<script src="app.js" defer></script>
+<script>
+  // PWA: Service Worker registration + silent auto-update (FIXED)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", async () => {
+      try {
+        const reg = await navigator.serviceWorker.register("/service-worker.js");
+
+        // Check for updates on each load
+        if (reg.update) reg.update();
+
+        // If there's an updated SW waiting, activate it silently
+        const activateWaiting = () => {
+          if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+        };
+
+        reg.addEventListener("updatefound", () => {
+          const sw = reg.installing;
+          if (!sw) return;
+
+          sw.addEventListener("statechange", () => {
+            if (sw.state === "installed" && navigator.serviceWorker.controller) {
+              activateWaiting();
+            }
+          });
+        });
+
+        // When the new SW takes control, reload once to serve fresh assets
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+
+        // In case an update was already downloaded
+        activateWaiting();
+      } catch (_) {
+        // ignore
+      }
+    });
+  }
+</script>
+<!-- Offline Hint -->
+<div id="offline-hint" >
+  ⚠️ أنت غير متصل بالإنترنت. النغمات التي لم تُشغَّل سابقًا قد لا تعمل.
+</div>
+
+<script>
+  const offlineHint = document.getElementById("offline-hint");
+  function updateOffline() {
+    offlineHint.style.display = navigator.onLine ? "none" : "block";
+  }
+  window.addEventListener("online", updateOffline);
+  window.addEventListener("offline", updateOffline);
+  updateOffline();
+</script>
+
+
+<script>
+/* UI_MAX_HELPERS: تحسينات واجهة فقط بدون تغيير المنطق */
+(function(){
+  // Improve toast copy feedback if toast() exists
+  function flashCopied(){
+    try { toast("✅ تم النسخ"); } catch(_) {}
+  }
+  const copyBtn = document.getElementById("btnCopyCode");
+  if (copyBtn){
+    copyBtn.addEventListener("click", () => setTimeout(flashCopied, 50));
+  }
+
+  // Skeleton while list loads (if listGrid exists)
+  const grid = document.getElementById("tonesGrid") || document.getElementById("listGrid");
+  if (grid && !grid.dataset.skeleton){
+    grid.dataset.skeleton = "1";
+    const make = () => {
+      const sk = document.createElement("div");
+      sk.className = "skeleton-wrap";
+      sk.innerHTML = Array.from({length:6}).map(()=>`
+        <div class="skeleton-card">
+          <div class="sk-line sk-title"></div>
+          <div class="sk-line sk-sub"></div>
+        </div>
+      `).join("");
+      return sk;
+    };
+    const sk = make();
+    grid.parentNode.insertBefore(sk, grid);
+    const obs = new MutationObserver(() => {
+      if (grid.children.length > 0){
+        sk.remove();
+        obs.disconnect();
+      }
+    });
+    obs.observe(grid, {childList:true});
+  }
+})();
+</script>
+
+
+</body>
+</html>

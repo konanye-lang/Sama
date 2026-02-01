@@ -1,0 +1,1 @@
+Replace styles.css with this file. This fixes the white flash overlay on play buttons.
