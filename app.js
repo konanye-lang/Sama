@@ -525,6 +525,7 @@ function normalizeRingtone(r, idx) {
     div.innerHTML = `
       <div class="tone-thumb-wrap">
         <img class="tone-thumb" src="${t.image}" alt="${safe(t.title)}"
+             loading="lazy" decoding="async"
              onerror="this.src='ringtones/images/placeholder.png'">
       </div>
 
@@ -750,7 +751,7 @@ function normalizeRingtone(r, idx) {
         <button class="btn btn-soft sub-btn" type="button">اشتراك</button>
         <div class="sub-right">
           <div class="sub-head">
-            <img class="company-logo" src="${c.logo}" alt="${safe(c.name)}" onerror="this.style.display='none'">
+            <!-- تم إزالة شعار الشركة حسب الطلب لتحسين السلاسة ومنع الوميض -->
           </div>
           <div class="company-name">${safe(c.name)}</div>
           <div class="company-code">الكود: <span class="mono">${safe(code)}</span></div>
@@ -885,6 +886,19 @@ item.querySelector("button").addEventListener("click", async () => {
     const els = (typeof limit === "number" && limit >= 0) ? nodes.slice(0, limit) : nodes;
 
     els.forEach(function (el) {
+	      if (!el) return;
+
+      // ✅ كاش بسيط لتجنب إعادة الحساب المتكرر (يحسن السلاسة على الجوال)
+      var w = el.clientWidth || 0;
+      var text = (el.textContent || "").trim();
+      var key = text + "|" + w;
+	      // لو تم القياس سابقاً لنفس النص/العرض: لا تعيد الحساب، فقط أظهر النص
+	      if (el.dataset && el.dataset.fitKey === key) {
+	        el.classList.add("fit-ready");
+	        return;
+	      }
+      if (el.dataset) el.dataset.fitKey = key;
+
       // Reset to base first
       var base = 14;
       el.style.whiteSpace = "nowrap";
@@ -892,19 +906,26 @@ item.querySelector("button").addEventListener("click", async () => {
       el.style.textOverflow = "ellipsis";
       el.style.fontSize = base + "px";
 
-      // If it fits, keep it
-      if (el.scrollWidth <= el.clientWidth) return;
+	      // If it fits, keep it (وأظهر النص فوراً بحجمه النهائي)
+	      if (el.scrollWidth <= el.clientWidth) {
+	        el.classList.add("fit-ready");
+	        return;
+	      }
 
       // Reduce until it fits or hits minSize
       for (var size = base; size >= minSize; size--) {
         el.style.fontSize = size + "px";
         if (el.scrollWidth <= el.clientWidth) break;
       }
+
+	      // انتهينا من القياس: أظهر النص بحجمه النهائي بدون وميض
+	      el.classList.add("fit-ready");
     });
   }
 
   function fitAll() {
-    fitTextSingleLine(".tone-name", 10, 40);
+    // ✅ تثبيت عناوين النغمات بدون أي تغيير/تحريك (لا auto-fit)
+    // يتم الاكتفاء بـ CSS (ellipsis + حجم ثابت)
     fitTextSingleLine(".company-name", 10);
     fitTextSingleLine(".company-number", 10);
     fitTextSingleLine(".company-code", 10);
@@ -919,12 +940,31 @@ item.querySelector("button").addEventListener("click", async () => {
   window.addEventListener("resize", fitAll);
 
   // Also run when DOM changes (e.g., navigating between sections)
+  // ✅ بدلاً من مراقبة body بالكامل (مكلف)، راقب الحاويات الأساسية فقط
   var t;
-  var obs = new MutationObserver(function () {
+  var raf = 0;
+  function scheduleFit() {
     clearTimeout(t);
-    t = setTimeout(fitAll, 50);
-  });
-  obs.observe(document.body, { childList: true, subtree: true });
+    t = setTimeout(function () {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(fitAll);
+    }, 120);
+  }
+
+  var targets = [
+    document.getElementById("viewList"),
+    document.getElementById("viewDetails"),
+    document.getElementById("categoriesGrid")
+  ].filter(Boolean);
+
+  var obs = new MutationObserver(scheduleFit);
+  if (targets.length) {
+    targets.forEach(function (node) {
+      obs.observe(node, { childList: true, subtree: true });
+    });
+  } else {
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
 })();
 
 
